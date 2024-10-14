@@ -1,0 +1,93 @@
+// Class representing a constructed URL
+class URL {
+    private String protocol;
+    private String hostname;
+    private int port;
+    private String pathParam;
+    private String queryParam;
+
+    public void display() {
+        StringBuilder url = new StringBuilder();
+        url.append(protocol).append("://").append(hostname);
+        if (port != 0) {
+            url.append(":").append(port);
+        }
+        if (pathParam != null) {
+            url.append("/").append(pathParam);
+        }
+        if (queryParam != null) {
+            url.append("?").append(queryParam);
+        }
+        System.out.println("Constructed URL: " + url.toString());
+    }
+
+    // Setters for URL components
+    public void setProtocol(String protocol) { this.protocol = protocol; }
+    public void setHostname(String hostname) { this.hostname = hostname; }
+    public void setPort(int port) { this.port = port; }
+    public void setPathParam(String pathParam) { this.pathParam = pathParam; }
+    public void setQueryParam(String queryParam) { this.queryParam = queryParam; }
+}
+
+// Abstract builder class for constructing URLs
+abstract class URLBuilder {
+    protected URL url = new URL(); // The URL object being built
+
+    // Abstract methods for building different parts of the URL
+    public abstract void buildProtocol();
+    public abstract void buildHostname();
+    public abstract void buildPort();
+    public abstract void buildPathParam();
+    public abstract void buildQueryParam();
+
+    // Returns the constructed URL
+    public URL getURL() { return url; }
+}
+
+// Concrete builder for constructing a standard web URL
+class WebURLBuilder extends URLBuilder {
+    public void buildProtocol() { url.setProtocol("https"); }
+    public void buildHostname() { url.setHostname("www.example.com"); }
+    public void buildPort() { url.setPort(443); }
+    public void buildPathParam() { url.setPathParam("products"); }
+    public void buildQueryParam() { url.setQueryParam("category=electronics&sort=price"); }
+}
+
+// Concrete builder for constructing a custom API URL
+class CustomURLBuilder extends URLBuilder {
+    public void buildProtocol() { url.setProtocol("http"); }
+    public void buildHostname() { url.setHostname("api.custom.com"); }
+    public void buildPort() { url.setPort(8080); }
+    public void buildPathParam() { url.setPathParam("v1/users"); }
+    public void buildQueryParam() { url.setQueryParam("id=12345"); }
+}
+
+// Director class that orchestrates the building of a URL
+class URLDirector {
+    // Method to build a URL using the provided builder
+    public URL buildURL(URLBuilder builder) {
+        builder.buildProtocol();
+        builder.buildHostname();
+        builder.buildPort();
+        builder.buildPathParam();
+        builder.buildQueryParam();
+        return builder.getURL(); // Return the constructed URL
+    }
+}
+
+// Client class demonstrating the use of the builder pattern
+public class URLBuilderDemo {
+    public static void main(String[] args) {
+        URLDirector director = new URLDirector(); // Create a director
+
+        // Construct a web URL using the WebURLBuilder
+        WebURLBuilder webURLBuilder = new WebURLBuilder();
+        URL webURL = director.buildURL(webURLBuilder);
+        webURL.display();  // Output: https://www.example.com:443/products?category=electronics&sort=price
+
+        // Construct a custom URL using the CustomURLBuilder
+        CustomURLBuilder customURLBuilder = new CustomURLBuilder();
+        URL customURL = director.buildURL(customURLBuilder);
+        customURL.display();  // Output: http://api.custom.com:8080/v1/users?id=12345
+    }
+}
