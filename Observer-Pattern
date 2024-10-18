@@ -1,0 +1,206 @@
+import java.util.ArrayList;
+import java.util.List;
+
+// Observer Interface
+interface OrderObserver {
+    void update(DeliveryOrder order);
+}
+
+// Concrete Observers
+class Customer implements OrderObserver {
+    private String customerName;
+
+    public Customer(String name) {
+        this.customerName = name;
+    }
+
+    @Override
+    public void update(DeliveryOrder order) {
+        System.out.println("Hello, " + customerName + "! Order #" + order.getId() + " is now " + order.getCurrentStatus() + ".");
+    }
+
+    @Override
+    public String toString() {
+        return "Customer: " + customerName;
+    }
+}
+
+class Restaurant implements OrderObserver {
+    private String restaurantName;
+
+    public Restaurant(String name) {
+        this.restaurantName = name;
+    }
+
+    @Override
+    public void update(DeliveryOrder order) {
+        System.out.println("Restaurant " + restaurantName + ": Order #" + order.getId() + " is now " + order.getCurrentStatus() + ".");
+    }
+
+    @Override
+    public String toString() {
+        return "Restaurant: " + restaurantName;
+    }
+}
+
+class DeliveryDriver implements OrderObserver {
+    private String driverName;
+
+    public DeliveryDriver(String name) {
+        this.driverName = name;
+    }
+
+    @Override
+    public void update(DeliveryOrder order) {
+        System.out.println("Driver " + driverName + ": Order #" + order.getId() + " is now " + order.getCurrentStatus() + ".");
+    }
+
+    @Override
+    public String toString() {
+        return "Delivery Driver: " + driverName;
+    }
+}
+
+class CustomerSupport implements OrderObserver {
+    @Override
+    public void update(DeliveryOrder order) {
+        System.out.println("Customer support: Order #" + order.getId() + " is now " + order.getCurrentStatus() + ".");
+    }
+
+    @Override
+    public String toString() {
+        return "Customer Support";
+    }
+}
+
+class DeliveryOrder {
+    private int orderId;
+    private String currentStatus;
+    private List<OrderObserver> observerList;
+
+    // Constructor to initialize order with default status
+    public DeliveryOrder(int id) {
+        this.orderId = id;
+        this.currentStatus = "Order Placed";
+        this.observerList = new ArrayList<>();
+    }
+
+    public int getId() {
+        return orderId;
+    }
+
+    public String getCurrentStatus() {
+        return currentStatus;
+    }
+
+    public void updateOrderStatus(String newStatus) {
+        System.out.println("Attempting to update order #" + orderId + " status from " + currentStatus + " to " + newStatus);
+        if (isValidStatusChange(newStatus)) {
+            currentStatus = newStatus;
+            System.out.println("Order status updated successfully.");
+            notifyAllObservers();
+        } else {
+            System.out.println("Invalid status transition from " + currentStatus + " to " + newStatus);
+        }
+    }
+
+    public void addObserver(OrderObserver observer) {
+        observerList.add(observer);
+        System.out.println(observer + " has been added to the observer list.");
+    }
+
+    public void removeObserver(OrderObserver observer) {
+        observerList.remove(observer);
+        System.out.println(observer + " has been removed from the observer list.");
+    }
+
+    private void notifyAllObservers() {
+        for (OrderObserver observer : observerList) {
+            observer.update(this);
+        }
+    }
+
+    // Method to validate status transitions
+    private boolean isValidStatusChange(String newStatus) {
+        return switch (currentStatus) {
+            case "Order Placed" -> newStatus.equals("Out for Delivery");
+            case "Out for Delivery" -> newStatus.equals("Delivered");
+            default -> false; // No other transitions allowed
+        };
+    }
+
+    // Method to list currently attached observers
+    public void listObservers() {
+        if (observerList.isEmpty()) {
+            System.out.println("No observers are currently attached.");
+        } else {
+            System.out.println("Currently attached observers:");
+            for (OrderObserver observer : observerList) {
+                System.out.println(" - " + observer);
+            }
+        }
+    }
+}
+
+public class OrderStatus {
+    public static void main(String[] args) {
+        // Create a delivery order
+        DeliveryOrder order1 = new DeliveryOrder(123);
+        System.out.println("Created Delivery Order #" + order1.getId() + " with initial status: " + order1.getCurrentStatus());
+        // Output: Created Delivery Order #123 with initial status: Order Placed
+
+        // Create observers
+        Customer customer1 = new Customer("Customer 1");
+        Restaurant restaurant1 = new Restaurant("Rest 1");
+        DeliveryDriver driver1 = new DeliveryDriver("Driver 1");
+        CustomerSupport customerSupport = new CustomerSupport();
+
+        // Attach observers to the order
+        order1.addObserver(customer1);
+        order1.addObserver(restaurant1);
+        order1.addObserver(driver1);
+        order1.addObserver(customerSupport);
+        // Output:
+        // Customer: Customer 1 has been added to the observer list.
+        // Restaurant: Rest 1 has been added to the observer list.
+        // Delivery Driver: Driver 1 has been added to the observer list.
+        // Customer support has been added to the observer list.
+
+        // Simulate order status updates
+        order1.updateOrderStatus("Out for Delivery"); // Valid transition
+        // Output:
+        // Attempting to update order #123 status from Order Placed to Out for Delivery
+        // Order status updated successfully.
+        // Hello, Customer 1! Order #123 is now Out for Delivery.
+        // Restaurant Rest 1: Order #123 is now Out for Delivery.
+        // Driver Driver 1: Order #123 is now Out for Delivery.
+        // Customer support: Order #123 is now Out for Delivery.
+
+        order1.updateOrderStatus("Delivered");        // Valid transition
+        // Output:
+        // Attempting to update order #123 status from Out for Delivery to Delivered
+        // Order status updated successfully.
+        // Hello, Customer 1! Order #123 is now Delivered.
+        // Restaurant Rest 1: Order #123 is now Delivered.
+        // Driver Driver 1: Order #123 is now Delivered.
+        // Customer support: Order #123 is now Delivered.
+
+        order1.updateOrderStatus("Out for Delivery"); // Invalid transition
+        // Output:
+        // Attempting to update order #123 status from Delivered to Out for Delivery
+        // Invalid status transition from Delivered to Out for Delivery
+
+        // Detach an observer (if needed)
+        order1.removeObserver(customerSupport);
+        // Output:
+        // Customer support has been removed from the observer list.
+
+        // Call the method to ensure things are working properly
+        order1.listObservers(); // List observers to confirm correct detachment
+        // Output:
+        // Currently attached observers:
+        //  - Customer: Customer 1
+        //  - Restaurant: Rest 1
+        //  - Delivery Driver: Driver 1
+    }
+}
